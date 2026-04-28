@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Controle PRO — Entregas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+    <div>
+        <div class="header-logo">🛵 MOTO PRO</div>
+        <div class="header-sub">Controle de Entregas</div>
+    </div>
+    <div class="header-date">
+        <div class="header-day" id="hdr-day"></div>
+        <div id="hdr-date"></div>
+    </div>
+    </div>
+
+    <!-- ESTATÍSTICAS -->
+    <div class="card">
+    <div class="card-title">📊 Resumo Financeiro</div>
+    <div class="stats-grid">
+        <div class="stat-box stat-today active">
+        <div class="stat-label">Hoje</div>
+        <div class="stat-value" id="st-hoje">R$ 0</div>
+        <div class="stat-sub" id="st-hoje-n">0 entregas</div>
+        </div>
+        <div class="stat-box stat-week">
+        <div class="stat-label">Semana</div>
+        <div class="stat-value" id="st-semana">R$ 0</div>
+        <div class="stat-sub" id="st-semana-n">0 entregas</div>
+        </div>
+        <div class="stat-box stat-month">
+        <div class="stat-label">Mês</div>
+        <div class="stat-value" id="st-mes">R$ 0</div>
+        <div class="stat-sub" id="st-mes-n">0 entregas</div>
+        </div>
+        <div class="stat-box stat-total">
+        <div class="stat-label">Total Geral</div>
+        <div class="stat-value" id="st-total">R$ 0</div>
+        <div class="stat-sub" id="st-total-n">0 entregas</div>
+        </div>
+    </div>
+    </div>
+
+    <!-- META DIÁRIA -->
+    <div class="card">
+    <div class="card-title">🎯 Meta Diária</div>
+    <div class="meta-row">
+        <div class="meta-input-wrap">
+        <span class="meta-prefix">R$</span>
+        <input type="number" id="inp-meta" placeholder="Defina sua meta" min="0" step="1">
+        </div>
+        <div class="meta-badge" id="meta-pct">0%</div>
+    </div>
+    <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="meta-footer">
+        <span id="meta-falta">Meta não definida</span>
+        <span id="meta-status"></span>
+    </div>
+    </div>
+
+    <!-- NOVA ENTREGA -->
+    <div class="card">
+    <div class="card-title">➕ Nova Entrega</div>
+    <div class="form-grid">
+        <div class="form-group">
+        <label>Data</label>
+        <input type="date" id="inp-data">
+        </div>
+        <div class="form-group">
+        <label>Hora</label>
+        <input type="time" id="inp-hora">
+        </div>
+        <div class="form-group full">
+        <label>Valor (R$)</label>
+        <input type="number" id="inp-valor" placeholder="0,00" min="0.01" step="0.01">
+        </div>
+        <div class="form-group full">
+        <label>Plataforma (opcional)</label>
+        <select id="inp-plataforma">
+            <option value="">Sem plataforma</option>
+            <option value="iFood">iFood</option>
+            <option value="Rappi">Rappi</option>
+            <option value="99Food">99Food</option>
+            <option value="Loggi">Loggi</option>
+            <option value="Lalamove">Lalamove</option>
+            <option value="Uber Eats">Uber Eats</option>
+            <option value="Próprio">Próprio</option>
+            <option value="Outro">Outro</option>
+        </select>
+        </div>
+    </div>
+    <button class="btn btn-accent" onclick="addEntrega()" style="margin-top:12px" id="btn-add">
+        💾 Adicionar Entrega
+    </button>
+    </div>
+
+    <!-- GRÁFICO -->
+    <div class="card">
+    <div class="card-title" style="margin-bottom:8px">📈 Evolução — Últimos 7 Dias</div>
+    <div class="chart-wrap">
+        <canvas id="canvas-grafico"></canvas>
+        <div class="chart-empty" id="chart-empty" style="display:none">
+        <div class="chart-empty-icon">📉</div>
+        <span>Adicione entregas para ver o gráfico</span>
+        </div>
+    </div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="card">
+    <div class="list-header">
+        <div class="card-title" style="margin-bottom:0">📋 Histórico</div>
+        <span class="badge" id="badge-count">0 registros</span>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-row">
+        <button class="filter-btn active" onclick="setFiltro('todos', this)">Todos</button>
+        <button class="filter-btn" onclick="setFiltro('hoje', this)">Hoje</button>
+        <button class="filter-btn" onclick="setFiltro('semana', this)">Semana</button>
+        <button class="filter-btn" onclick="setFiltro('mes', this)">Mês</button>
+    </div>
+
+    <div id="lista"></div>
+
+    <div class="divider" id="divider-total" style="display:none"></div>
+    <div class="total-row" id="total-row" style="display:none">
+        <span>Total filtrado</span>
+        <strong id="total-filtrado">R$ 0,00</strong>
+    </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">📄 CSV</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportExcel()">📊 Excel</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportBackup()">💾 Backup</button>
+    <div class="import-wrap">
+        <input type="file" accept=".json" onchange="importBackup(event)">
+        <button class="btn btn-ghost btn-sm" style="pointer-events:none">📂 Importar</button>
+    </div>
+    <button class="btn btn-danger-ghost btn-sm" style="width:auto;padding:8px 12px" onclick="resetTudo()">🗑️</button>
+    </div>
+
+    <!-- MODAL EDIÇÃO -->
+    <div class="modal-overlay" id="modal-overlay" onclick="fecharModal(event)">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <div class="modal-title">✏️ Editar Entrega</div>
+            <input type="hidden" id="edit-id">
+            <div class="form-grid">
+                <div class="form-group">
+                <label>Data</label>
+                <input type="date" id="edit-data">
+            </div>
+            <div class="form-group">
+                <label>Hora</label>
+                <input type="time" id="edit-hora">
+            </div>
+            <div class="form-group full">
+                <label>Valor (R$)</label>
+                <input type="number" id="edit-valor" min="0.01" step="0.01">
+            </div>
+            <div class="form-group full">
+                <label>Plataforma</label>
+                <select id="edit-plataforma">
+                <option value="">Sem plataforma</option>
+                <option value="iFood">iFood</option>
+                <option value="Rappi">Rappi</option>
+                <option value="99Food">99Food</option>
+                <option value="Loggi">Loggi</option>
+                <option value="Lalamove">Lalamove</option>
+                <option value="Uber Eats">Uber Eats</option>
+                <option value="Próprio">Próprio</option>
+                <option value="Outro">Outro</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-accent" onclick="salvarEdicao()">💾 Salvar</button>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast-container" id="toast-container"></div>
+
+
+    <script src="script.js"></script>
+</body>
+</html>
